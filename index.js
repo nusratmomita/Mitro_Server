@@ -20,12 +20,28 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  try {
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } 
-  finally {
-  }
+
+    const subjectsCollection = client.db("Mitro").collection("subjects");
+
+    try {
+
+        app.get("/subjects", async(req,res) => {
+            const allSubjects = await subjectsCollection.find().toArray();
+            res.send(allSubjects);
+        })
+        // to create a new subject
+        app.post("/subjects", async(req,res)=>{
+            // res.send("Subjects calling!!")
+            const newSubject = req.body;
+            const result = await subjectsCollection.insertOne(newSubject);
+            res.send(result);
+        })
+
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } 
+    finally {
+    }
 }
 
 
