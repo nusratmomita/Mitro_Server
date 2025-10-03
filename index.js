@@ -22,18 +22,30 @@ const client = new MongoClient(uri, {
 async function run() {
 
     const subjectsCollection = client.db("Mitro").collection("subjects");
+    const budgetCollection = client.db("Mitro").collection("budget");
 
     try {
 
+        // * Subject Schedule
+        // to get all the subject data
         app.get("/subjects", async(req,res) => {
             const allSubjects = await subjectsCollection.find().toArray();
             res.send(allSubjects);
-        })
+        });
+
         // to create a new subject
         app.post("/subjects", async(req,res)=>{
             // res.send("Subjects calling!!")
             const newSubject = req.body;
             const result = await subjectsCollection.insertOne(newSubject);
+            res.send(result);
+        });
+
+        // * Budget tracker
+        // to create a new budget entry
+        app.post("/budget", async(req,res)=>{
+            const newBudget = req.body;
+            const result = await budgetCollection.insertOne(newBudget);
             res.send(result);
         })
 
