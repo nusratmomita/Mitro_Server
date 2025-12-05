@@ -57,49 +57,52 @@ async function run() {
         });
 
         app.post("/api/answer", async (req, res) => {
-            const { topic } = req.body;
-            console.log(topic)
+  const { topic } = req.body;
 
-            if (!topic || !topic.trim()) {
-                return res.status(400).json({ error: "Topic is required." });
-            }
+  if (!topic || !topic.trim()) {
+      return res.status(400).json({ error: "Topic is required." });
+  }
 
-            try {
-                const response = await fetch(`https://api-inference.huggingface.co/models/${modelName}`,
-                    {
-                        method: "POST",
-                        headers: {
-                        Authorization: `Bearer ${hugging_face_api_key}`,
-                        "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ inputs: `Answer this student question clearly:\n\n${topic}` }),
-                    }
-                );
-                console.log(response)
+  try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Answer this question clearly in 4-5 lines:\n\n${topic}`
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
 
-                // Check if HF returned JSON
-                const text = await response.text();
-                let data;
-                
-                try {
-                    data = JSON.parse(text);
-                } 
-                catch {
-                    console.error("HF API returned non-JSON:", text);
-                    return res.status(500).json({ error: "Hugging Face API returned invalid response", details: text });
-                }
+      const data = await response.json();
+      console.log("Gemini Response:", data);
 
-                // Extract answer
-                const aiText =
-                data?.[0]?.generated_text ||
-                "⚠️ Sorry, the AI could not generate an answer right now.";
+      const aiText =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "⚠️ Sorry, Gemini could not generate an answer.";
 
-                res.json({ answer: aiText });
-            } catch (error) {
-                console.error(error);
-                res.status(500).json({ error: "Error fetching AI response", details: error.message });
-            }
-        });
+      res.json({ answer: aiText });
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        error: "Error fetching AI response",
+        details: error.message
+      });
+  }
+});
+
 
 
         
